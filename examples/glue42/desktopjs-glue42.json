@@ -1,0 +1,18 @@
+{
+    "title": "desktopJS Glue42",
+    "type": "window",
+    "name": "desktopJS-glue42",
+    "details": {
+        "url": "http://localhost:8000/",
+        "top": 200,
+        "left": 200,
+        "width": 800,
+        "height": 500,
+        "allowCollapse": false
+    },
+    "ignoreSaveOnClose": true,
+    "allowMultiple": false,
+    "customProperties": {
+        "appManagerOrder": -1
+    }
+}
