@@ -32,7 +32,6 @@
         "react-anchor-blank-noopener": true,
         "react-iframe-missing-sandbox": true,
         "react-no-dangerous-html": true,
-
         /**
          * Common Bugs and Correctness.
          */
@@ -98,7 +97,6 @@
         "use-isnan": true,
         "use-named-parameter": true,
         "valid-typeof": false,
-        
         /**
          * Code Clarity.
          */
@@ -126,12 +124,12 @@
             false
         ],
         "jsdoc-format": true,
-        "max-classes-per-file": [  // we generally recommend making one public class per file 
+        "max-classes-per-file": [ // we generally recommend making one public class per file 
             false,
             4
         ],
         "max-file-line-count": [
-             true
+            true
         ],
         "max-func-body-length": [
             true,
@@ -159,7 +157,7 @@
         "no-empty-interface": true,
         "no-for-in": false,
         "no-function-expression": true,
-        "no-inferrable-types": [  // turn no-inferrable-types off in order to make the code consistent in its use of type decorations
+        "no-inferrable-types": [ // turn no-inferrable-types off in order to make the code consistent in its use of type decorations
             false
         ],
         "no-multiline-string": true, // multiline-strings often introduce unnecessary whitespace into the string literals
@@ -168,7 +166,7 @@
         "no-relative-imports": false,
         "no-require-imports": false,
         "no-shadowed-variable": false,
-        "no-suspicious-comment": true,
+        "no-suspicious-comment": false,
         "no-typeof-undefined": false,
         "no-unnecessary-field-initialization": true,
         "no-unnecessary-local-variable": true,
@@ -182,7 +180,7 @@
         "one-variable-per-declaration": [
             false
         ],
-        "only-arrow-functions": [  // there are many valid reasons to declare a function
+        "only-arrow-functions": [ // there are many valid reasons to declare a function
             false
         ],
         "ordered-imports": [
@@ -205,7 +203,6 @@
         "underscore-consistent-invocation": true,
         "unified-signatures": true,
         "variable-name": true,
-
         /**
          * Accessibility.
          */
@@ -223,7 +220,6 @@
         "react-a11y-role-supports-aria-props": true,
         "react-a11y-tabindex-no-positive": true,
         "react-a11y-titles": true,
-
         /**
          * Whitespace related rules.
          */
@@ -238,7 +234,7 @@
         "import-spacing": true,
         "indent": [
             true,
-            "spaces"  // .editorconfig
+            "spaces" // .editorconfig
         ],
         "linebreak-style": [
             false,
@@ -292,7 +288,6 @@
             "check-separator",
             "check-type"
         ],
-
         /**
          * Controversial/Configurable rules.
          */
@@ -316,7 +311,6 @@
         "object-literal-shorthand": false, // object-literal-shorthand offers an abbreviation not an abstraction
         "prefer-type-cast": true, // pick either type-cast format and use it consistently
         "space-before-function-paren": false, // turn this on if this is really your coding standard
-        
         /**
          * Deprecated rules.
          */
