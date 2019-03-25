@@ -5,13 +5,20 @@
 <head>
     <meta charset="utf-8" />
     <title>desktopJS</title>
+
+    <!--  TODO: Remove once we inject a pre-loaded glue for the desktopJS-glue application. -->
+    <script type="text/javascript" src="assets/js/GlueJS.js"></script>
+
     <script type="text/javascript" src="desktop.js"></script>
     <script type="text/javascript" src="desktopjs-openfin.js"></script>
     <script type="text/javascript" src="desktopjs-electron.js"></script>
+    <script type="text/javascript" src="desktopjs-glue42.js"></script>
 
     <!-- Bootstrap/JQuery from CDN to make example simple -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+        integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
+        integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 
     <link rel="stylesheet" href="assets/css/app.css">
 </head>
@@ -20,7 +27,8 @@
     <nav class="navbar navbar-default navbar-fixed-top">
         <div class="container-fluid">
             <div class="navbar-header">
-                <a class="navbar-brand active" data-toggle="pill" href="#windows" onclick="$('[href=\'#windows\']').tab('show');" tabindex="-1">
+                <a class="navbar-brand active" data-toggle="pill" href="#windows"
+                    onclick="$('[href=\'#windows\']').tab('show');" tabindex="-1">
                     <img height="30" src="assets/img/logo.png" alt="desktopJS" />
                 </a>
             </div>
@@ -92,7 +100,8 @@
                             <td style="padding:5px">
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-addon" id="input-label-message">message</span>
-                                    <input type="text" class="form-control" placeholder="Message" aria-describedby="input-label-message" id="input-publish" value="Test Message">
+                                    <input type="text" class="form-control" placeholder="Message"
+                                        aria-describedby="input-label-message" id="input-publish" value="Test Message">
                                 </div>
                             </td>
                             <td nowrap>
@@ -127,7 +136,8 @@
 
     <footer class="footer navbar-fixed-bottom">
         <span>
-            <a href="#" data-toggle="popover" data-content="Container type and unique identifier" data-trigger="hover" data-placement="top">
+            <a href="#" data-toggle="popover" data-content="Container type and unique identifier" data-trigger="hover"
+                data-placement="top">
                 <span class="text-muted" id="hostName"></span>
             </a>
         </span>
@@ -136,9 +146,11 @@
         </span>
     </footer>
 
-    <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+    <script>if (typeof module === 'object') { window.module = module; module = undefined; }</script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+        integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+        crossorigin="anonymous"></script>
     <script>if (window.module) module = window.module;</script>
 
     <script type="text/javascript" src="assets/js/app.js"></script>
