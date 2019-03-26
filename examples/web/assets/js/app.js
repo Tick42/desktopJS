@@ -63,7 +63,7 @@
 		});
 	};
 
-	document.addEventListener("DOMContentLoaded", function (event) {
+	const init = () => {
 		updatefps();
 
 		hostName.innerHTML = container.hostType + " &#8226; " + container.uuid + " &#8226; " + desktopJS.version;
@@ -82,7 +82,6 @@
 
 		desktopJS.ContainerWindow.addListener("window-joinGroup", (e) => container.log("info", "grouped " + JSON.stringify(e)));
 		desktopJS.ContainerWindow.addListener("window-leaveGroup", (e) => container.log("info", "ungrouped" + JSON.stringify(e)));
-
 		subscribe();
 
 		// If url is provided a hash, try to navigate to bootstrap tab if exists
@@ -98,7 +97,15 @@
 					windowStateTracking: desktopJS.WindowStateTracking.Main | desktopJS.WindowStateTracking.Group
 				});
 		}
-	});
+	}
+
+	if (document.readyState !== 'loading') {
+		init();
+	} else {
+		document.addEventListener('DOMContentLoaded', function () {
+			init();
+		});
+	}
 
 	openWindowButton.onclick = function () {
 		container.createWindow("http://localhost:8000",
