@@ -9,7 +9,8 @@
         "width": 800,
         "height": 500,
         "allowCollapse": false,
-        "mode": "tab"
+        "mode": "tab",
+        "allowChannels": true
     },
     "ignoreSaveOnClose": true,
     "allowMultiple": false,
