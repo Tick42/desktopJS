@@ -8,7 +8,8 @@
         "left": 200,
         "width": 800,
         "height": 500,
-        "allowCollapse": false
+        "allowCollapse": false,
+        "mode": "tab"
     },
     "ignoreSaveOnClose": true,
     "allowMultiple": false,
