@@ -17,7 +17,7 @@ container agnostic and provide portability when multiple container deployments a
 Usage
 ---------------
 
-The first step is to simply [resolve](https://morgan-stanley.github.io/desktopJS/modules/_registry_.html#resolvecontainer) the current [container](https://morgan-stanley.github.io/desktopJS/classes/_container_.container.html). This enumerates
+The first step is to simply [resolve](https://morgan-stanley.github.io/desktopJS/modules/_morgan_stanley_desktopjs.html#resolvecontainer) the current [container](https://morgan-stanley.github.io/desktopJS/classes/_morgan_stanley_desktopjs.container.html). This enumerates
 all registered containers (including your own custom container or derived custom implementations) and
 returns the container implementation that matches.
 
@@ -26,7 +26,7 @@ var container = desktopJS.resolveContainer();
 console.log("Container: " + container.hostType);
 ```
 
-Interact with the [container](https://morgan-stanley.github.io/desktopJS/classes/_container_.container.html) via a single api instead of having conditional code or applications
+Interact with the [container](https://morgan-stanley.github.io/desktopJS/classes/_morgan_stanley_desktopjs.container.html) via a single api instead of having conditional code or applications
 based on deployment.
 
 ```
@@ -48,11 +48,10 @@ Build the project.  This runs static analysis, unit tests and bundles the output
 rollup.
 
 ```
-$ npm run build
+$ npm run build && npm test
 ```
 
-For those using [Visual Studio Code](https://code.visualstudio.com/), tasks.json has a compile task
-configured and can be invoked via ctrl+shift+b by default.
+For those using [Visual Studio Code](https://code.visualstudio.com/), tasks.json has a build task.
 
 Development
 -----------
@@ -63,7 +62,7 @@ To run the examples or to manually test scenarios in each container, there is a 
 a local server with live reload.  This can be run directly via gulp or through npm.
 
 ```
-$ npm run server
+$ npm start
 ```
 
 This is configured to listen at [http://localhost:8000](http://localhost:8000) and will reload upon
@@ -76,7 +75,7 @@ codebase.
 The tests can be run independent of the build.
 
 ```
-$ npm run test
+$ npm test
 ```
 
 A task is provided for [Visual Studio Code](https://code.visualstudio.com/) users that can be launched

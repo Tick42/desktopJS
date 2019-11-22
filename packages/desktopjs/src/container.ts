@@ -15,7 +15,8 @@ import { GlobalShortcutManager } from "./shortcut";
 export type ContainerEventType =
     "window-created" |
     "layout-loaded" |
-    "layout-saved";
+    "layout-saved" |
+    "layout-deleted";
 
 export class LayoutEventArgs extends EventArgs {
     public readonly layout?: PersistedWindowLayout;
@@ -42,11 +43,19 @@ export abstract class Container extends EventEmitter implements ContainerWindowM
      */
     public abstract hostType: string;
 
+    public getInfo(): Promise<string> {
+        return Promise.resolve(undefined);
+    }
+
     /**
      * Unique v4 GUID for this Container instance
      * @type {string}
      */
     public abstract uuid: string;
+
+    public ready(): Promise<void> {
+        return Promise.resolve();
+    }
 
     public abstract getMainWindow(): ContainerWindow;
 
@@ -54,9 +63,13 @@ export abstract class Container extends EventEmitter implements ContainerWindowM
 
     public abstract createWindow(url: string, options?: any): Promise<ContainerWindow>;
 
+    public abstract buildLayout(): Promise<PersistedWindowLayout>;
+
     public abstract saveLayout(name: string): Promise<PersistedWindowLayout>;
 
-    public abstract loadLayout(name: string): Promise<PersistedWindowLayout>;
+    public abstract loadLayout(layout: string | PersistedWindowLayout): Promise<PersistedWindowLayout>;
+
+    public abstract deleteLayout(layout: string): Promise<void>;
 
     public abstract getLayouts(): Promise<PersistedWindowLayout[]>;
 
@@ -179,15 +192,28 @@ export abstract class ContainerBase extends Container {
         Container.emit("layout-saved", { name: "layout-saved", layout: layout, layoutName: layout.name });
     }
 
+    protected deleteLayoutFromStorage(name: string) {
+        const layouts: any = JSON.parse(this.storage.getItem(ContainerBase.layoutsPropertyKey)) || {};
+        const layout = layouts[name];
+
+        if (layout) {
+            delete layouts[name];
+
+            this.storage.setItem(ContainerBase.layoutsPropertyKey, JSON.stringify(layouts));
+            this.emit("layout-deleted", { sender: this, name: "layout-deleted", layoutName: layout.name });
+            Container.emit("layout-deleted", { name: "layout-deleted", layoutName: layout.name });
+        }
+    }
+
     protected abstract closeAllWindows(excludeSelf?: Boolean): Promise<void>;
 
-    public loadLayout(name: string): Promise<PersistedWindowLayout> {
+    public loadLayout(layout: string | PersistedWindowLayout): Promise<PersistedWindowLayout> {
         return new Promise<PersistedWindowLayout>((resolve, reject) => {
             this.closeAllWindows(true).then(() => {
-                const layout = <PersistedWindowLayout>this.getLayoutFromStorage(name);
-                if (layout && layout.windows) {
+                const layoutToLoad = (typeof layout === "string") ? <PersistedWindowLayout>this.getLayoutFromStorage(layout) : layout;
+                if (layoutToLoad && layoutToLoad.windows) {
                     const promises: Promise<ContainerWindow>[] = [];
-                    for (const window of layout.windows) {
+                    for (const window of layoutToLoad.windows) {
                         const options: any = Object.assign(window.options || {}, window.bounds);
                         options.name = window.name;
                         if (window.main) {
@@ -203,7 +229,7 @@ export abstract class ContainerBase extends Container {
 
                         // de-dupe window grouping
                         windows.forEach(window => {
-                            const matchingWindow = layout.windows.find(win => win.name === window.name);
+                            const matchingWindow = layoutToLoad.windows.find(win => win.name === window.name);
                             if (matchingWindow && matchingWindow.state && window.setState) {
                                 window.setState(matchingWindow.state).catch(e => this.log("error", "Error invoking setState: " + e));
                             }
@@ -225,20 +251,37 @@ export abstract class ContainerBase extends Container {
 
                         groupMap.forEach((targets, window) => {
                             targets.forEach(target => {
-                                this.getWindowByName(layout.windows.find(win => win.id === target).name).then(targetWin => {
+                                this.getWindowByName(layoutToLoad.windows.find(win => win.id === target).name).then(targetWin => {
                                     targetWin.joinGroup(window);
                                 });
                             });
                         });
                     });
 
-                    this.emit("layout-loaded", { sender: this, name: "layout-loaded", layout: layout, layoutName: layout.name });
-                    Container.emit("layout-loaded", { name: "layout-loaded", layout: layout, layoutName: layout.name });
-                    resolve(layout);
+                    this.emit("layout-loaded", { sender: this, name: "layout-loaded", layout: layoutToLoad, layoutName: layoutToLoad.name });
+                    Container.emit("layout-loaded", { name: "layout-loaded", layout: layoutToLoad, layoutName: layoutToLoad.name });
+                    resolve(layoutToLoad);
                 } else {
-                    reject("Layout does not exist");
+                    reject("Layout does not exist or is invalid");
                 }
             });
+        });
+    }
+
+    public abstract buildLayout(): Promise<PersistedWindowLayout>;
+
+    public saveLayout(name: string): Promise<PersistedWindowLayout> {
+        return new Promise<PersistedWindowLayout>((resolve, reject) => {
+            this.buildLayout().then(layout => {
+                this.saveLayoutToStorage(name, layout);
+                resolve(layout);
+            }).catch(reject);
+        });
+    }
+
+    public deleteLayout(name: string): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            resolve(this.deleteLayoutFromStorage(name));
         });
     }
 

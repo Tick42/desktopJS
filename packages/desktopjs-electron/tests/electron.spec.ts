@@ -453,7 +453,8 @@ describe("ElectronContainer", () => {
                 }
             },
             require: (type: string) => { return {} },
-            getCurrentWindow: () => { return windows[0]; }
+            getCurrentWindow: () => { return windows[0]; },
+            process: { versions: { electron: "1", chrome: "2" } }
         };
         container = new ElectronContainer(electron, new MockIpc(), globalWindow);
     });
@@ -461,6 +462,13 @@ describe("ElectronContainer", () => {
     it("hostType is Electron", () => {
         expect(container.hostType).toEqual("Electron");
     });
+
+    it ("getInfo invokes underlying version info", (done) => {
+        container.getInfo().then(info => {
+            expect(info).toEqual("Electron/1 Chrome/2");
+        }).then(done);
+    });
+
 
     it("error during creation", () => {
         spyOn(console, "error");
@@ -523,8 +531,8 @@ describe("ElectronContainer", () => {
 
     it("createWindow", (done) => {
         spyOn<any>(container, "browserWindow").and.callThrough();
-        container.createWindow("url", { x: "x", taskbar: false }).then(done);
-        expect((<any>container).browserWindow).toHaveBeenCalledWith({ x: "x", skipTaskbar: true });
+        container.createWindow("url", { x: "x", taskbar: false, node: true }).then(done);
+        expect((<any>container).browserWindow).toHaveBeenCalledWith({ x: "x", skipTaskbar: true, webPreferences: { nodeIntegration: true } });
     });
 
     it("createWindow fires window-created", (done) => {
@@ -545,6 +553,22 @@ describe("ElectronContainer", () => {
         const options = { name: "name" };
         container.createWindow("url", options).then(done);
         expect((<any>container).windowManager.initializeWindow).toHaveBeenCalledWith(jasmine.any(Object), "name", options);
+    });
+
+    it("createWindow pulls nodeIntegration default from container", (done) => {
+        const container = new ElectronContainer(electron, new MockIpc(), globalWindow, { node: true });
+        spyOn<any>(container, "browserWindow").and.callThrough();
+        container.createWindow("url", { }).then(() => {
+            expect(container.browserWindow).toHaveBeenCalledWith({ webPreferences: { nodeIntegration: true }});
+        }).then(done);
+    });
+
+    it("createWindow with node specified ignores container default", (done) => {
+        const container = new ElectronContainer(electron, new MockIpc(), globalWindow, { node: true });
+        spyOn<any>(container, "browserWindow").and.callThrough();
+        container.createWindow("url", { node: false }).then(() => {
+            expect(container.browserWindow).toHaveBeenCalledWith({ webPreferences: { nodeIntegration: false }});
+        }).then(done);
     });
 
     it("addTrayIcon", () => {
@@ -664,6 +688,28 @@ describe("ElectronContainer", () => {
                     fail(error);
                     done();
                 });
+        });
+
+        it("buildLayout skips windows with persist false", (done) => {
+            const win1 = jasmine.createSpyObj(["getOptions", "getGroup", "getState"]);
+            Object.defineProperty(win1, "innerWindow", {
+                value: { name: "win1", "desktopJS-options": { main: true }, "webContents": { getURL() { return "" } }, getBounds() { return undefined } }
+            });
+            win1.getGroup.and.returnValue(Promise.resolve([]));
+            win1.getState.and.returnValue(Promise.resolve(undefined));
+            const win2 = jasmine.createSpyObj(["getOptions", "getGroup", "getState"]);
+            Object.defineProperty(win2, "innerWindow", {
+                value: { name: "win2", "desktopJS-options": { persist: false }, "webContents": { getURL() { return "" } }, getBounds() { return undefined } }
+            });
+            win2.getGroup.and.returnValue(Promise.resolve([]));
+            win2.getState.and.returnValue(Promise.resolve(undefined));
+            spyOn(container, "getMainWindow").and.returnValue(win1);
+            spyOn(container, "getAllWindows").and.returnValue(Promise.resolve([win1, win2]));
+            container.buildLayout().then(layout => {
+                expect(layout).toBeDefined();
+                expect(layout.windows.length).toEqual(1);
+                expect(layout.windows[0].name === "win1")
+            }).then(done);
         });
     });
 });

@@ -6,7 +6,7 @@ import {
     registerContainer, ContainerWindow, PersistedWindowLayout, Rectangle, Container, WebContainerBase,
     ScreenManager, Display, Point, ObjectTransform, PropertyMap, NotificationOptions, ContainerNotification,
     TrayIconDetails, MenuItem, Guid, MessageBus, MessageBusSubscription, MessageBusOptions, EventArgs,
-    GlobalShortcutManager
+    GlobalShortcutManager, WindowEventArgs
 } from "@morgan-stanley/desktopjs";
 
 registerContainer("OpenFin", {
@@ -17,7 +17,7 @@ registerContainer("OpenFin", {
 const windowEventMap = {
     move: "bounds-changing",
     resize: "bounds-changing",
-    close: "close-requested",
+    close: "closing",
     focus: "focused",
     blur: "blurred",
     maximize: "maximized",
@@ -187,6 +187,9 @@ export class OpenFinContainerWindow extends ContainerWindow {
             }
 
             resolve();
+        }).then(() => {
+            this.emit("state-changed", <EventArgs> { name: "state-changed", sender: this, state: state });
+            ContainerWindow.emit("state-changed", <WindowEventArgs> { name: "state-changed", windowId: this.id, state: state } );
         });
     }
 
@@ -450,10 +453,25 @@ export class OpenFinContainer extends WebContainerBase {
         }
     }
 
+    public getInfo(): Promise<string | undefined> {
+        return new Promise<string | undefined>((resolve, reject) => {
+            this.desktop.System.getRvmInfo(rvmInfo => {
+                this.desktop.System.getRuntimeInfo(runtimeInfo => {
+                    console.log(runtimeInfo); // tslint:disable-line
+                    resolve(`RVM/${rvmInfo.version} Runtime/${runtimeInfo.version}`);
+                }, reject);
+            }, reject);
+        });
+    }
+
     public log(level: "debug" | "info" | "warn" | "error", message: string): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             this.desktop.System.log(level, message, resolve, reject);
         });
+    }
+
+    public ready(): Promise<void> {
+        return new Promise(resolve => this.desktop.main(resolve));
     }
 
     public getMainWindow(): ContainerWindow {
@@ -642,7 +660,7 @@ export class OpenFinContainer extends WebContainerBase {
         });
     }
 
-    public saveLayout(name: string): Promise<PersistedWindowLayout> {
+    public buildLayout(): Promise<PersistedWindowLayout> {
         const layout = new PersistedWindowLayout();
 
         return new Promise<PersistedWindowLayout>(async (resolve, reject) => {
@@ -657,30 +675,35 @@ export class OpenFinContainer extends WebContainerBase {
                         const window = djsWindow.innerWindow;
                         window.getBounds(bounds => {
                             window.getOptions(options => {
-                                delete (<any>options).show; // show is an undocumented option that interferes with the createWindow mapping of show -> autoShow
-                                window.getGroup(group => {
-                                    layout.windows.push(
-                                        {
-                                            name: window.name,
-                                            id: window.name,
-                                            url: window.getNativeWindow() ? window.getNativeWindow().location.toString() : options.url,
-                                            main: (mainWindow && (mainWindow.name === window.name)),
-                                            options: options,
-                                            state: state,
-                                            bounds: { x: bounds.left, y: bounds.top, width: bounds.width, height: bounds.height },
-                                            group: group.map(win => win.name)
-                                        });
+                                // If window was created with persist: false, skip from layout
+                                const customData: any = (options.customData ? JSON.parse(options.customData) : undefined);
+                                if (customData && "persist" in customData && !customData.persist) {
                                     innerResolve();
-                                }, innerReject);
+                                } else {
+                                    delete (<any>options).show; // show is an undocumented option that interferes with the createWindow mapping of show -> autoShow
+                                    window.getGroup(group => {
+                                        layout.windows.push(
+                                            {
+                                                name: window.name,
+                                                id: window.name,
+                                                url: window.getNativeWindow() ? window.getNativeWindow().location.toString() : options.url,
+                                                main: (mainWindow && (mainWindow.name === window.name)),
+                                                options: options,
+                                                state: state,
+                                                bounds: { x: bounds.left, y: bounds.top, width: bounds.width, height: bounds.height },
+                                                group: group.map(win => win.name)
+                                            });
+                                        innerResolve();
+                                    }, innerReject);
+                                }
                             }, innerReject);
                         }, innerReject);
                     }));
                 });
 
             Promise.all(promises).then(() => {
-                this.saveLayoutToStorage(name, layout);
                 resolve(layout);
-            }).catch(reason => reject(reason));
+            }).catch(reject);
         });
     }
 }

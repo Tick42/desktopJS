@@ -1,6 +1,7 @@
 import {} from "jasmine";
 import { Default } from "../../../src/Default/default";
 import { ContainerWindow } from "../../../src/window";
+import { Container } from "../../../src/container";
 
 class MockWindow {
     public listener: any;
@@ -94,7 +95,7 @@ describe("DefaultContainerWindow", () => {
         });
     });        
 
-    describe("setState", () => {
+    xdescribe("setState", () => {
         it("setState undefined", (done) => {
             let mockWindow = new MockWindow();
             delete mockWindow.setState;            
@@ -266,6 +267,15 @@ describe("DefaultContainer", () => {
         expect(container.hostType).toEqual("Default");
     });
 
+    it ("getInfo returns underlying navigator appversion", (done) => {
+        const window = new MockWindow();
+        window["navigator"] = { appVersion: "useragent" };
+        const container: Default.DefaultContainer = new Default.DefaultContainer(<any>window);
+        container.getInfo().then(info => {
+            expect(info).toEqual("useragent");
+        }).then(done);
+    });
+
     describe("createWindow", () => {
         let container: Default.DefaultContainer;
 
@@ -335,6 +345,7 @@ describe("DefaultContainer", () => {
         let container: Default.DefaultContainer = new Default.DefaultContainer(window);
         let win: ContainerWindow = container.getMainWindow();
         expect(win).toBeDefined();
+        expect(win.id).toEqual("root");
         expect(win.innerWindow).toEqual(window);
     });
 
@@ -459,6 +470,24 @@ describe("DefaultContainer", () => {
                     fail(error);
                     done();
                 });
+        });
+
+        it("buildLayout skips windows with persist false", (done) => {
+            window[Default.DefaultContainer.windowsPropertyKey] = {
+                "1": new MockWindow(),
+                "2": new MockWindow()
+            };
+
+            window[Default.DefaultContainer.windowsPropertyKey]["1"][Default.DefaultContainer.windowNamePropertyKey] = "win1";
+            window[Default.DefaultContainer.windowsPropertyKey]["1"][Container.windowOptionsPropertyKey] = { persist: false };
+            window[Default.DefaultContainer.windowsPropertyKey]["2"][Default.DefaultContainer.windowNamePropertyKey] = "win2";
+
+            let container: Default.DefaultContainer = new Default.DefaultContainer(window);
+            container.buildLayout().then(layout => {
+                expect(layout).toBeDefined();
+                expect(layout.windows.length).toEqual(1);
+                expect(layout.windows[0].name).toEqual("win2");
+            }).then(done);
         });
     });
 });

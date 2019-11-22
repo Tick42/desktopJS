@@ -82,6 +82,8 @@ export class TestContainer extends ContainerBase {
 
     public getWindowById(): Promise<ContainerWindow> { return Promise.resolve(undefined); }
 
+    public buildLayout(): Promise<PersistedWindowLayout> { return Promise.resolve(undefined); }
+
     public saveLayout(): Promise<PersistedWindowLayout> { return Promise.resolve(undefined); }
 }
 
@@ -95,6 +97,16 @@ describe("container", () => {
 
     it("ipc is defined", () => {
         expect(container.ipc).toBeDefined();
+    });
+
+    it("ready resolves", (done) => {
+        container.ready().then(done);
+    });
+
+    it ("getInfo returns undefined", (done) => {
+        container.getInfo().then(info => {
+            expect(info).toBeUndefined();
+        }).then(done);
     });
 
     describe("Static events", () => {
@@ -171,12 +183,18 @@ describe("container", () => {
                 spyOn(container, "createWindow").and.returnValue(jasmine.createSpyObj("window", ["joinGroup"]));
             });
 
-            it("loadLayout", (done) => {
+            it("loadLayout by name", (done) => {
                 container.loadLayout("Test").then(layout => {
                     expect(layout).toBeDefined();
                     expect(container.createWindow).toHaveBeenCalledWith("url", { name: "1" });
                     done();
                 });
+            });
+
+            it ("loadLayout by unknown name rejects", (done) => {
+                container.loadLayout("Unknown").catch(error => {
+                    expect(error).toEqual("Layout does not exist or is invalid");
+                }).then(done);
             });
 
             it("loadLayout fires layout-loaded", (done) => {
@@ -185,6 +203,40 @@ describe("container", () => {
                 });
 
                 container.loadLayout("Test");
+            });
+
+            it ("loadLayout with layout creates window", async () => {
+                const layoutToLoad: PersistedWindowLayout =  new PersistedWindowLayout("Test");
+                layoutToLoad.windows.push({ name: "1", id: "1", url: "url", bounds: {}, state: { "value": "foo" }, group: ["1", "2", "3"]});
+               
+                const layout = await container.loadLayout(layoutToLoad);
+                expect(container.createWindow).toHaveBeenCalledTimes(1);
+                expect(container.createWindow).toHaveBeenCalledWith("url", {name: "1"});
+                expect(layout).toBeDefined();
+                expect(layout.name).toEqual("Test");
+            });
+
+            it ("loadLayout by unknown name rejects", (done) => {
+                container.loadLayout("Unknown").catch(error => {
+                    expect(error).toEqual("Layout does not exist or is invalid");
+                }).then(done);
+            });
+
+            it ("loadLayout with no windows rejects", (done) => {
+                container.loadLayout(new PersistedWindowLayout("Test")).catch(error => {
+                    expect(error).toEqual("Layout does not exist or is invalid");
+                }).then(done);
+            });
+
+            it ("loadLayout with poorly constructed layout still creates windows", async () => {
+                const layoutToLoad: PersistedWindowLayout =  new PersistedWindowLayout();
+                layoutToLoad.windows.push(<any>{ });
+               
+                const layout = await container.loadLayout(layoutToLoad);
+                expect(container.createWindow).toHaveBeenCalledTimes(1);
+                expect(container.createWindow).toHaveBeenCalledWith(undefined, {name: undefined});
+                expect(layout).toBeDefined();
+                expect(layout.name).toEqual(undefined);
             });
 
             it("saveLayoutToStorage", () => {
@@ -199,6 +251,13 @@ describe("container", () => {
                     done();
                 });
                 (<any>container).saveLayoutToStorage("Test", layout);
+            });
+
+            it("deleteLayout fires layout-deleted", async (done) => {
+                container.addListener("layout-deleted", async (e) => {
+                    done();
+                });
+                container.deleteLayout("Test");
             });
 
             it("getLayouts", (done) => {

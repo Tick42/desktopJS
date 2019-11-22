@@ -2,7 +2,7 @@
   "name": "@morgan-stanley/desktopjs",
   "title": "desktopJS",
   "description": "Library for abstracting common container hosting",
-  "version": "3.0.0",
+  "version": "3.6.0",
   "publishConfig": {
     "access": "public"
   },
@@ -38,10 +38,9 @@
     "deploy": "npm publish",
     "prepublishOnly": "copyfiles ../../README.md . -u 2"
   },
-  "dependencies": {},
   "devDependencies": {
-    "@types/jasmine": "^2.8.11",
-    "copyfiles": "^2.1.0",
-    "gulp": "^4.0.0"
+    "@types/jasmine": "^2.8.16",
+    "copyfiles": "^2.1.1",
+    "gulp": "^4.0.2"
   }
 }

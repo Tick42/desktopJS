@@ -6,7 +6,7 @@ class MockDesktop {
     public static application: any = {
         eventListeners: new Map(),
         uuid: "uuid",
-        getChildWindows(callback) { callback([MockWindow.singleton]); },
+        getChildWindows(callback) { callback([MockWindow.singleton, new MockWindow("Window2", JSON.stringify({ persist: false }))]); },
         setTrayIcon() { },
         getWindow() { return MockWindow.singleton; },
         addEventListener(eventName, listener) {
@@ -21,6 +21,7 @@ class MockDesktop {
             }
         }
     }
+    main(callback): any { callback() };
     GlobalHotkey: any = { };
     Window: any = MockWindow;
     Notification(): any { return {}; }
@@ -59,9 +60,11 @@ class MockInterApplicationBus {
 class MockWindow {
     static singleton: MockWindow = new MockWindow("Singleton");
     public nativeWindow: Window = jasmine.createSpyObj("window", ["location", "getState", "setState"]);
+    private customData: string;
 
-    constructor(name?: string) {
+    constructor(name?: string, customData?: string) {
         this.name = name;
+        this.customData = customData;
     }
 
     public name: string;
@@ -141,7 +144,7 @@ class MockWindow {
     }
 
     getOptions(callback: (options: any) => void, error: (reason) => void): any {
-        callback({ url: "url" });
+        callback({ url: "url", customData: this.customData });
         return {};
     }
 
@@ -502,6 +505,25 @@ describe("OpenFinContainer", () => {
         expect(container.hostType).toEqual("OpenFin");
     });
 
+    it ("getInfo invokes underlying getRvmInfo and getRuntimeInfo", (done) => {
+        const system = jasmine.createSpyObj("system", ["getRvmInfo", "getRuntimeInfo"]);
+        system.getRvmInfo.and.callFake(f => f({ version: "1" }));
+        system.getRuntimeInfo.and.callFake(f => f({ version: "2" }));
+        Object.defineProperty(desktop, "System", { value: system });
+        container.getInfo().then(info => {
+            expect(system.getRvmInfo).toHaveBeenCalledTimes(1);
+            expect(system.getRuntimeInfo).toHaveBeenCalledTimes(1);
+            expect(info).toEqual("RVM/1 Runtime/2");
+        }).then(done);
+    });
+
+    it("ready invokes underlying main", (done) => {
+        spyOn(desktop, "main").and.callThrough();
+        container.ready().then(() => {
+            expect(desktop.main).toHaveBeenCalled();
+        }).then(done);
+    });
+
     describe("ctor options", () => {
         describe("registerUser", () => {
             let desktop;
@@ -639,72 +661,80 @@ describe("OpenFinContainer", () => {
             container.addListener("window-created", () => done());
             MockDesktop.application.emit('window-created', { name: "name" });
         });
+    });
 
-        describe("window management", () => {
-            it("getAllWindows returns wrapped native windows", (done) => {
-                container.getAllWindows().then(windows => {
-                    expect(windows).not.toBeNull();
-                    expect(windows.length).toEqual(2);
-                    expect(windows[0].innerWindow).toEqual(MockWindow.singleton);
-                    done();
-                });
-            });
-
-            describe("getWindow", () => {
-                it("getWindowById returns wrapped window", (done) => {
-                    container.getWindowById("Singleton").then(win => {
-                        expect(win).toBeDefined();
-                        expect(win.id).toEqual("Singleton");
-                        done();
-                    });
-                });
-
-                it ("getWindowById with unknown id returns null", (done) => {
-                    container.getWindowById("DoesNotExist").then(win => {
-                        expect(win).toBeNull();
-                        done();
-                    });
-                });
-
-                it("getWindowByName returns wrapped window", (done) => {
-                    container.getWindowByName("Singleton").then(win => {
-                        expect(win).toBeDefined();
-                        expect(win.id).toEqual("Singleton");
-                        done();
-                    });
-                });
-
-                it ("getWindowByName with unknown name returns null", (done) => {
-                    container.getWindowByName("DoesNotExist").then(win => {
-                        expect(win).toBeNull();
-                        done();
-                    });
-                });
-            });
-
-            it("closeAllWindows invokes window.close", (done) => {
-                spyOn(MockWindow.singleton, "close").and.callThrough();
-                (<any>container).closeAllWindows().then(done).catch(error => {
-                    fail(error);
-                    done();
-                });;
-                expect(MockWindow.singleton.close).toHaveBeenCalled();
-            });
-
-            it("saveLayout invokes underlying saveLayoutToStorage", (done) => {
-                spyOn<any>(container, "saveLayoutToStorage").and.stub();
-                container.saveLayout("Test")
-                    .then(layout => {
-                        expect(layout).toBeDefined();
-                        expect((<any>container).saveLayoutToStorage).toHaveBeenCalledWith("Test", layout);
-                        done();
-                    }).catch(error => {
-                        fail(error);
-                        done();
-                    });
+    describe("window management", () => {
+        it("getAllWindows returns wrapped native windows", (done) => {
+            container.getAllWindows().then(windows => {
+                expect(windows).not.toBeNull();
+                expect(windows.length).toEqual(3);
+                expect(windows[0].innerWindow).toEqual(MockWindow.singleton);
+                done();
             });
         });
-    });
+
+        describe("getWindow", () => {
+            it("getWindowById returns wrapped window", (done) => {
+                container.getWindowById("Singleton").then(win => {
+                    expect(win).toBeDefined();
+                    expect(win.id).toEqual("Singleton");
+                    done();
+                });
+            });
+
+            it ("getWindowById with unknown id returns null", (done) => {
+                container.getWindowById("DoesNotExist").then(win => {
+                    expect(win).toBeNull();
+                    done();
+                });
+            });
+
+            it("getWindowByName returns wrapped window", (done) => {
+                container.getWindowByName("Singleton").then(win => {
+                    expect(win).toBeDefined();
+                    expect(win.id).toEqual("Singleton");
+                    done();
+                });
+            });
+
+            it ("getWindowByName with unknown name returns null", (done) => {
+                container.getWindowByName("DoesNotExist").then(win => {
+                    expect(win).toBeNull();
+                    done();
+                });
+            });
+        });
+
+        it("closeAllWindows invokes window.close", (done) => {
+            spyOn(MockWindow.singleton, "close").and.callThrough();
+            (<any>container).closeAllWindows().then(done).catch(error => {
+                fail(error);
+                done();
+            });;
+            expect(MockWindow.singleton.close).toHaveBeenCalled();
+        });
+
+        it("saveLayout invokes underlying saveLayoutToStorage", (done) => {
+            spyOn<any>(container, "saveLayoutToStorage").and.stub();
+            container.saveLayout("Test")
+                .then(layout => {
+                    expect(layout).toBeDefined();
+                    expect((<any>container).saveLayoutToStorage).toHaveBeenCalledWith("Test", layout);
+                    done();
+                }).catch(error => {
+                    fail(error);
+                    done();
+                });
+        });
+
+        it("buildLayout skips windows with persist false", (done) => {
+            container.buildLayout().then(layout => {
+                expect(layout).toBeDefined();
+                expect(layout.windows.length).toEqual(2);
+                expect(layout.windows[0].name === "Singleton")
+            }).then(done);
+        });
+    });    
 
     describe("notifications", () => {
         it("showNotification passes message and invokes underlying notification api", () => {

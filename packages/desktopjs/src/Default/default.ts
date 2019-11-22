@@ -3,12 +3,13 @@
  */
 
 import { Container, WebContainerBase } from "../container";
-import { ContainerWindow, PersistedWindowLayout, Rectangle } from "../window";
+import { ContainerWindow, PersistedWindowLayout, Rectangle, WindowEventArgs } from "../window";
 import { ScreenManager, Display, Point } from "../screen";
 import { NotificationOptions } from "../notification";
 import { ObjectTransform, PropertyMap } from "../propertymapping";
 import { Guid } from "../guid";
 import { MessageBus, MessageBusSubscription, MessageBusOptions } from "../ipc";
+import { EventArgs } from "../events";
 
 declare var Notification: any;
 
@@ -125,6 +126,9 @@ export namespace Default {
                 }
 
                 resolve();
+            }).then(() => {
+                this.emit("state-changed", <EventArgs> { name: "state-changed", sender: this, state: state });
+                ContainerWindow.emit("state-changed", <WindowEventArgs> { name: "state-changed", windowId: this.id, state: state } );
             });
         }
 
@@ -214,11 +218,12 @@ export namespace Default {
      */
     export class DefaultContainer extends WebContainerBase {
         private mainWindow: ContainerWindow;
-        private windows: ContainerWindow[];
 
         public static readonly windowsPropertyKey: string = "desktopJS-windows";
         public static readonly windowUuidPropertyKey: string = "desktopJS-uuid";
         public static readonly windowNamePropertyKey: string = "desktopJS-name";
+
+        private static readonly rootWindowUuid: string = "root";
 
         public static readonly defaultWindowOptionsMap: PropertyMap = {
             x: { target: "left" },
@@ -236,6 +241,7 @@ export namespace Default {
             // Create a global windows object for tracking all windows and add the current global window for current
             if (this.globalWindow && !(DefaultContainer.windowsPropertyKey in this.globalWindow)) {
                 this.globalWindow[DefaultContainer.windowsPropertyKey] = { root: this.globalWindow };
+                this.globalWindow[DefaultContainer.windowNamePropertyKey] = this.globalWindow[DefaultContainer.windowUuidPropertyKey] = DefaultContainer.rootWindowUuid;
             }
 
             this.screen = new DefaultDisplayManager(this.globalWindow);
@@ -245,9 +251,14 @@ export namespace Default {
             return new DefaultMessageBus(this);
         }
 
+        public getInfo(): Promise<string | undefined> {
+            return Promise.resolve(this.globalWindow.navigator.appVersion);
+        }
+
         public getMainWindow(): ContainerWindow {
             if (!this.mainWindow) {
-                this.mainWindow = new DefaultContainerWindow(this.globalWindow);
+                const win = this.globalWindow[DefaultContainer.windowsPropertyKey].root;
+                this.mainWindow = win ? this.wrapWindow(win) : null;
             }
 
             return this.mainWindow;
@@ -377,7 +388,7 @@ export namespace Default {
             });
         }
 
-        public saveLayout(name: string): Promise<PersistedWindowLayout> {
+        public buildLayout(): Promise<PersistedWindowLayout> {
             const layout = new PersistedWindowLayout();
 
             return new Promise<PersistedWindowLayout>((resolve, reject) => {
@@ -385,16 +396,22 @@ export namespace Default {
 
                 this.getAllWindows().then(windows => {
                     windows.forEach(window => {
+                        const nativeWin = window.nativeWindow;
+
+                        const options = nativeWin[Container.windowOptionsPropertyKey];
+                        if (options && "persist" in options && !options.persist) {
+                            return;
+                        }
+
                         promises.push(new Promise<void>(async (innerResolve) => {
-                            const nativeWin = window.nativeWindow;
                             if (this.globalWindow !== nativeWin) {
                                 layout.windows.push(
                                     {
                                         name: window.name,
-                                        url: nativeWin.location.toString(),
+                                        url: (nativeWin && nativeWin.location) ? nativeWin.location.toString() : undefined,
                                         id: window.id,
                                         bounds: { x: nativeWin.screenX, y: nativeWin.screenY, width: nativeWin.outerWidth, height: nativeWin.outerHeight },
-                                        options: nativeWin[Container.windowOptionsPropertyKey],
+                                        options: options,
                                         state: await window.getState()
                                     }
                                 );
@@ -404,9 +421,8 @@ export namespace Default {
                     });
 
                     Promise.all(promises).then(() => {
-                        this.saveLayoutToStorage(name, layout);
                         resolve(layout);
-                    }).catch(reason => reject(reason));
+                    }).catch(reject);
                 });
             });
         }
