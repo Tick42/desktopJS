@@ -107,7 +107,7 @@
             true,
             "array"
         ],
-        "arrow-parens": false,  // for simple functions the parens on arrow functions are not needed
+        "arrow-parens": false, // for simple functions the parens on arrow functions are not needed
         "callable-types": true,
         "chai-prefer-contains-to-index-of": true,
         "chai-vague-errors": true,
@@ -178,7 +178,7 @@
         "no-var-requires": true,
         "no-var-self": false,
         "no-void-expression": false,
-        "object-literal-sort-keys": false,  // turn object-literal-sort-keys off and sort keys in a meaningful manner
+        "object-literal-sort-keys": false, // turn object-literal-sort-keys off and sort keys in a meaningful manner
         "one-variable-per-declaration": [
             false
         ],
