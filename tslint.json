@@ -126,7 +126,7 @@
             false
         ],
         "jsdoc-format": true,
-        "max-classes-per-file": [  // we generally recommend making one public class per file
+        "max-classes-per-file": [  // we generally recommend making one public class per file 
             false,
             4
         ],
@@ -316,7 +316,7 @@
         "object-literal-shorthand": false, // object-literal-shorthand offers an abbreviation not an abstraction
         "prefer-type-cast": true, // pick either type-cast format and use it consistently
         "space-before-function-paren": false, // turn this on if this is really your coding standard
-        
+
         /**
          * Deprecated rules.
          */
