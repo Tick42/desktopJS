@@ -98,7 +98,7 @@
         "use-isnan": true,
         "use-named-parameter": true,
         "valid-typeof": false,
-
+        
         /**
          * Code Clarity.
          */
@@ -182,7 +182,7 @@
         "one-variable-per-declaration": [
             false
         ],
-        "only-arrow-functions": [ // there are many valid reasons to declare a function
+        "only-arrow-functions": [  // there are many valid reasons to declare a function
             false
         ],
         "ordered-imports": [
