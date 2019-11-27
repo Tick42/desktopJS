@@ -59,7 +59,7 @@ desktopJS.Electron.ElectronContainer.prototype.showNotification = function (titl
 };
 */
 
-document.addEventListener("DOMContentLoaded", function (event) {
+const init =() => {
 	updatefps();
 
 	container = desktopJS.resolveContainer({node: true});
@@ -98,7 +98,14 @@ document.addEventListener("DOMContentLoaded", function (event) {
 				});
 		}
 	});
-});
+};
+
+if (document.readyState !== 'loading') {
+    init();
+} else {
+    document.addEventListener('DOMContentLoaded', function() {
+        init();
+    });
 
 openWindowButton.onclick = function () {
 	container.createWindow("http://localhost:8000",
