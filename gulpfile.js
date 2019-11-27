@@ -1,6 +1,8 @@
 'use strict';
 
-var gulp = require('gulp'), connect = require('gulp-connect'), gulpConfig = require('./.gulp/gulpConfig');
+var gulp = require('gulp'),
+connect = require('gulp-connect'),
+gulpConfig = require('./.gulp/gulpConfig');
 
 gulp.task('test', require('./.gulp/tasks/tests')(gulp, gulpConfig));
 
