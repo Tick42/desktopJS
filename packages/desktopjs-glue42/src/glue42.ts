@@ -369,16 +369,8 @@ export class Glue42Container extends WebContainerBase {
 
     public async buildLayout(): Promise<PersistedWindowLayout | null> {
         throw new Error("Method not implemented.");
-        // const glueLayout = await this.desktop.layouts.saveLayout();
-        //
-        // return this.mapLayout(glueLayout);
     }
 
-    // private mapLayout(glueLayout: any): PersistedWindowLayout{
-    //     glueLayout.map(win => {
-    //         const perstWin: PersistedWindow = {};
-    //     });
-    // }
 }
 
 /** @private */
