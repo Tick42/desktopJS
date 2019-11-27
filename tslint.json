@@ -98,7 +98,7 @@
         "use-isnan": true,
         "use-named-parameter": true,
         "valid-typeof": false,
-        
+
         /**
          * Code Clarity.
          */
@@ -316,7 +316,7 @@
         "object-literal-shorthand": false, // object-literal-shorthand offers an abbreviation not an abstraction
         "prefer-type-cast": true, // pick either type-cast format and use it consistently
         "space-before-function-paren": false, // turn this on if this is really your coding standard
-
+        
         /**
          * Deprecated rules.
          */
