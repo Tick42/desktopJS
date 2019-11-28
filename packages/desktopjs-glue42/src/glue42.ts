@@ -383,7 +383,7 @@ class Glue42DisplayManager implements ScreenManager {
 
     private mapDisplay(glueDisplay: any): Display {
         const { left, top, width, height } = glueDisplay.bounds;
-        const { left: wasLeft, top: waTop, width: waWidth, height: waHeight } = glueDisplay.workArea;
+        const { left: wasLeft, top: waTop, width: waWidth, height: waHeight } = glueDisplay.workingArea;
 
         const { id, scaleFactor } = glueDisplay;
 
