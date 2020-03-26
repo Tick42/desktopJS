@@ -3,7 +3,7 @@ desktopJS and [Glue42](https://glue42.com/ "Glue42")
 
 Steps to run:
 0. Make sure you have ```node``` & ```npm``` installed
-1. Download and install [latest Glue42 Enterprise 3.9](https://enterprise.glue42.com/install/enterprise/feature/desktop-js/3.9.0-alpha.0.0/GlueInstallerEnterprise.exe "Download link")
+1. Download and install [latest Glue42 Enterprise 3.9]("Download link")
 2. Clone https://github.com/Tick42/desktopJS
 3. Start desktop JS
 ```bat

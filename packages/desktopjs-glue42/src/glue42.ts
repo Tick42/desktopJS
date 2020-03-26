@@ -22,13 +22,16 @@ import {
     MessageBusSubscription,
     MessageBusOptions,
     EventArgs,
-    GlobalShortcutManager,
-    PersistedWindow
+    GlobalShortcutManager
 } from "@morgan-stanley/desktopjs";
 
 registerContainer("Glue42", {
     condition: () => window !== undefined && "glue42gd" in window && "gluePromise" in window,
-    create: (options) => <any>new Glue42Container(null, null, options)
+    create: (options) => {
+        const cnr = <any>new Glue42Container(null, null, options);
+        (<any>window).glueContainer = cnr;
+        return cnr;
+    }
 });
 
 const windowEventMap = {
@@ -40,7 +43,7 @@ const windowEventMap = {
     maximize: "maximized",
     minimize: "minimized",
     restore: "restored"
-}; // TODO
+};
 
 /**
  * @augments ContainerWindow
@@ -152,21 +155,58 @@ export class Glue42ContainerWindow extends ContainerWindow {
         }
     }
 
-    protected attachListener(eventName: string, listener: (...args: any[]) => void): void {
-        throw new Error("Method not implemented."); // TODO
+    private registeredListeners: { [eventName: string]: (...args: any[]) => void } = {};
+
+    public attachListener(eventName: string, listener: (event: EventArgs) => void): void {
+        switch (eventName) {
+            case windowEventMap.move:
+            case windowEventMap.resize:
+                this.registeredListeners[eventName] = this.innerWindow.onBoundsChanged(listener);
+                break;
+            case windowEventMap.restore:
+                this.registeredListeners[eventName] = this.innerWindow.onNormal(listener);
+                break;
+            case windowEventMap.close:
+                this.registeredListeners[eventName] = this.innerWindow.onClosing(listener);
+                break;
+            case windowEventMap.blur:
+                this.registeredListeners[eventName] = this.innerWindow.onFocusChanged((win) => {
+                    if (!win.isFocused) {
+                        const event = new EventArgs("", "", "");
+                        listener(event);
+                    }
+                });
+                break;
+            case windowEventMap.focus:
+                this.registeredListeners[eventName] = this.innerWindow.onFocusChanged((win) => {
+                    if (win.isFocused) {
+                        const event = new EventArgs("", "", "");
+                        listener(event);
+                    }
+                });
+                break;
+            case windowEventMap.maximize:
+                this.registeredListeners[eventName] = this.innerWindow.onMaximized(listener);
+                break;
+            case windowEventMap.minimize:
+                this.registeredListeners[eventName] = this.innerWindow.onMinimized(listener);
+                break;
+            default:
+
+                break;
+        }
     }
 
-    protected wrapListener(eventName: string, listener: (event: EventArgs) => void): (event: EventArgs) => void {
-        throw new Error("Method not implemented."); // TODO
-    }
+    // wrapListener --> super
 
-    protected detachListener(eventName: string, listener: (...args: any[]) => void): any {
-        throw new Error("Method not implemented."); // TODO
+    protected detachListener(eventName: string, listener: (event: EventArgs) => void): any {
+        delete this.registeredListeners[eventName];
     }
 
     public get nativeWindow(): Window {
         return this.innerWindow.getNativeWindow(); // TODO
     }
+
 }
 
 /**
@@ -292,7 +332,7 @@ export class Glue42Container extends WebContainerBase {
     }
 
     public log(level: "debug" | "info" | "warn" | "error", message: string): Promise<void> {
-        throw new Error("Method not implemented."); // TODO
+        return this.desktop.logger.log(message, level);
     }
 
     public getMainWindow(): ContainerWindow {
@@ -348,27 +388,27 @@ export class Glue42Container extends WebContainerBase {
     }
 
     public addTrayIcon(details: TrayIconDetails, listener: () => void, menuItems?: MenuItem[]) {
-        throw new Error("Method not implemented.");
+        throw new Error("Method not implemented."); // TODO
     }
 
     protected closeAllWindows(): Promise<void> {
-        throw new Error("Method not implemented.");
+        throw new Error("Method not implemented."); // TODO
     }
 
     public getAllWindows(): Promise<ContainerWindow[]> {
-        throw new Error("Method not implemented.");
+        throw new Error("Method not implemented."); // TODO
     }
 
     public getWindowById(id: string): Promise<ContainerWindow | null> {
-        throw new Error("Method not implemented.");
+        throw new Error("Method not implemented."); // TODO
     }
 
     public getWindowByName(name: string): Promise<ContainerWindow | null> {
-        throw new Error("Method not implemented.");
+        throw new Error("Method not implemented."); // TODO
     }
 
     public async buildLayout(): Promise<PersistedWindowLayout | null> {
-        throw new Error("Method not implemented.");
+        throw new Error("Method not implemented."); // TODO
     }
 
 }
