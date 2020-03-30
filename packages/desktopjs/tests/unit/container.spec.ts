@@ -1,6 +1,5 @@
-import {} from "jasmine";
-import { Container, ContainerBase, WebContainerBase } from "../../src/container";
-import { ContainerWindow, PersistedWindowLayout, PersistedWindow } from "../../src/window";
+import { Container, ContainerBase } from "../../src/container";
+import { ContainerWindow, PersistedWindowLayout } from "../../src/window";
 import { NotificationOptions } from "../../src/notification";
 import { MessageBus, MessageBusSubscription, MessageBusOptions } from "../../src/ipc";
 import { EventArgs, EventEmitter } from "../../src/events";
@@ -208,7 +207,7 @@ describe("container", () => {
             it ("loadLayout with layout creates window", async () => {
                 const layoutToLoad: PersistedWindowLayout =  new PersistedWindowLayout("Test");
                 layoutToLoad.windows.push({ name: "1", id: "1", url: "url", bounds: {}, state: { "value": "foo" }, group: ["1", "2", "3"]});
-               
+
                 const layout = await container.loadLayout(layoutToLoad);
                 expect(container.createWindow).toHaveBeenCalledTimes(1);
                 expect(container.createWindow).toHaveBeenCalledWith("url", {name: "1"});
@@ -231,7 +230,7 @@ describe("container", () => {
             it ("loadLayout with poorly constructed layout still creates windows", async () => {
                 const layoutToLoad: PersistedWindowLayout =  new PersistedWindowLayout();
                 layoutToLoad.windows.push(<any>{ });
-               
+
                 const layout = await container.loadLayout(layoutToLoad);
                 expect(container.createWindow).toHaveBeenCalledTimes(1);
                 expect(container.createWindow).toHaveBeenCalledWith(undefined, {name: undefined});

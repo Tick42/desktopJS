@@ -8,7 +8,6 @@ import {
     PersistedWindowLayout,
     Rectangle,
     WebContainerBase,
-    ScreenManager,
     Display,
     Point,
     ObjectTransform,
@@ -22,11 +21,13 @@ import {
     MessageBusSubscription,
     MessageBusOptions,
     EventArgs,
-    GlobalShortcutManager
+    GlobalShortcutManager,
+    ScreenManager,
+    PersistedWindow
 } from "@morgan-stanley/desktopjs";
 
 registerContainer("Glue42", {
-    condition: () => window !== undefined && "glue42gd" in window && "gluePromise" in window,
+    condition: () => window !== undefined && "glue42gd" in window && "Glue" in window,
     create: (options) => {
         const cnr = <any>new Glue42Container(null, null, options);
         (<any>window).glueContainer = cnr;
@@ -206,7 +207,6 @@ export class Glue42ContainerWindow extends ContainerWindow {
     public get nativeWindow(): Window {
         return this.innerWindow.getNativeWindow(); // TODO
     }
-
 }
 
 /**
@@ -259,6 +259,9 @@ export class Glue42MessageBus implements MessageBus {
     }
 }
 
+const mainWindowName = "main_desktopJS";
+const getUniqueWindowName = () => "desktopJS" + "";
+
 /**
  * @extends WebContainerBase
  */
@@ -294,11 +297,15 @@ export class Glue42Container extends WebContainerBase {
     }
 
     public async initGlue(options: any): Promise<void> {
-        const glue = await (<any>window).gluePromise;
+        const glue = await (<any>window).Glue({ windows: true, agm: true, bus: true, hotkeys: true, logger: true });
         this.desktop = glue;
         (<any>window).glue = glue;
 
-        this.ipc = this.createMessageBus();
+        try {
+            this.ipc = this.createMessageBus();
+        } catch (err) {
+            console.error(err);
+        }
 
         let replaceNotificationApi = Glue42Container.replaceNotificationApi;
         if (options && typeof options.replaceNotificationApi !== "undefined") {
@@ -310,9 +317,22 @@ export class Glue42Container extends WebContainerBase {
         }
 
         this.screen = new Glue42DisplayManager(this.desktop);
-        this.mainWindow = this.wrapWindow(glue.windows.my()); // TODO
+        const parentWindow = this.findTopParent(glue.windows.my());
+
+        this.mainWindow = this.wrapWindow(parentWindow);
 
         this.globalShortcut = new Glue42GlobalShortcutManager(this.desktop);
+    }
+
+    private findTopParent(gdWindow: any) {
+        const parentId = gdWindow.settings.parentInstanceId;
+        if (!parentId) {
+            return gdWindow;
+        }
+
+        const parent = this.desktop.windows.findById(parentId);
+
+        return this.findTopParent(parent);
     }
 
     protected createMessageBus(): MessageBus {
@@ -336,7 +356,7 @@ export class Glue42Container extends WebContainerBase {
     }
 
     public getMainWindow(): ContainerWindow {
-        return this.mainWindow; // TODO
+        return this.mainWindow;
     }
 
     public getCurrentWindow(): ContainerWindow {
@@ -362,7 +382,11 @@ export class Glue42Container extends WebContainerBase {
     }
 
     public createWindow(url: string, options?: any): Promise<ContainerWindow> {
-        const newOptions = this.getWindowOptions(options);
+        const newOptions = {
+            ...this.getWindowOptions(options),
+            isChild: true
+        };
+
         let name;
 
         if ("name" in newOptions) {
@@ -371,7 +395,8 @@ export class Glue42Container extends WebContainerBase {
             name = Guid.newGuid();
         }
 
-        return this.desktop.windows.open(name, url, newOptions).then(this.wrapWindow);
+        return this.desktop.windows.open(name, url, newOptions)
+            .then(this.wrapWindow);
     }
 
     public showNotification(title: string, options?: NotificationOptions) {
@@ -392,23 +417,72 @@ export class Glue42Container extends WebContainerBase {
     }
 
     protected closeAllWindows(): Promise<void> {
-        throw new Error("Method not implemented."); // TODO
+        return this.mainWindow.innerWindow.close();
     }
 
     public getAllWindows(): Promise<ContainerWindow[]> {
-        throw new Error("Method not implemented."); // TODO
+        const main = this.mainWindow.innerWindow;
+        const allChildWindows = this.desktop.windows.list().filter(win => win.settings.isChild);
+        const result = [];
+
+        const findParentsOfWindow = (gdWindow) => {
+            result.push(gdWindow);
+
+            const children = allChildWindows.filter(win => win.settings.parentInstanceId === gdWindow.id);
+            if (!children || children.length === 0) {
+                return;
+            }
+
+            children.forEach((child) => findParentsOfWindow(child));
+        };
+
+        findParentsOfWindow(main);
+
+        return Promise.resolve(result.map(this.wrapWindow));
     }
 
-    public getWindowById(id: string): Promise<ContainerWindow | null> {
-        throw new Error("Method not implemented."); // TODO
+    public async getWindowById(id: string): Promise<ContainerWindow | null> {
+        const all = await this.getAllWindows();
+
+        const res = all.find(win => win.id === id);
+        if (!res) {
+            return null;
+        }
+
+        return res;
     }
 
-    public getWindowByName(name: string): Promise<ContainerWindow | null> {
-        throw new Error("Method not implemented."); // TODO
+    public async getWindowByName(name: string): Promise<ContainerWindow | null> {
+        const all = await this.getAllWindows();
+
+        const res = all.find(win => win.id === name);
+        if (!res) {
+            return null;
+        }
+
+        return res;
     }
 
     public async buildLayout(): Promise<PersistedWindowLayout | null> {
-        throw new Error("Method not implemented."); // TODO
+        const all = await this.getAllWindows();
+
+        const layout = new PersistedWindowLayout();
+        const toPersistentWindow = ({ id, innerWindow, name }: ContainerWindow): PersistedWindow => {
+            return {
+                name,
+                bounds: innerWindow.bounds,
+                group: innerWindow.group,
+                id,
+                main: this.mainWindow.id === id,
+                options: innerWindow.settings,
+                state: innerWindow.state,
+                url: innerWindow.url
+            };
+        };
+
+        layout.windows = all.map(toPersistentWindow);
+
+        return layout;
     }
 
 }

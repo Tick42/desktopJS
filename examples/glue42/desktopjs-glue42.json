@@ -25,6 +25,6 @@
     "ignoreSaveOnClose": true,
     "allowMultiple": false,
     "customProperties": {
-        "appManagerOrder": -1
+        "appManagerOrder": 1
     }
 }
