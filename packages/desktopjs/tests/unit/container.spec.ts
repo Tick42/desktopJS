@@ -1,6 +1,6 @@
 import {} from "jasmine";
-import { Container, ContainerBase } from "../../src/container";
-import { ContainerWindow, PersistedWindowLayout } from "../../src/window";
+import { Container, ContainerBase, WebContainerBase  } from "../../src/container";
+import { ContainerWindow, PersistedWindowLayout, PersistedWindow  } from "../../src/window";
 import { NotificationOptions } from "../../src/notification";
 import { MessageBus, MessageBusSubscription, MessageBusOptions } from "../../src/ipc";
 import { EventArgs, EventEmitter } from "../../src/events";
