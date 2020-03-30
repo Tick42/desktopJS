@@ -1,3 +1,4 @@
+import {} from "jasmine";
 import { Container, ContainerBase } from "../../src/container";
 import { ContainerWindow, PersistedWindowLayout } from "../../src/window";
 import { NotificationOptions } from "../../src/notification";

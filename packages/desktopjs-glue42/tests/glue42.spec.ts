@@ -1,3 +1,3 @@
 import { } from "jasmine";
 
-describe("", () => { }); // TODO
+describe("", () => { });
