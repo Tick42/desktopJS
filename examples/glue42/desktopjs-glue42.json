@@ -1,0 +1,30 @@
+{
+    "title": "desktopJS Glue42",
+    "type": "window",
+    "name": "desktopJS-glue42",
+    "autoStart":true,
+    "details": {
+        "url": "http://localhost:8000/",
+        "top": 200,
+        "left": 200,
+        "width": 800,
+        "height": 500,
+        "allowCollapse": false,
+        "mode": "tab",
+        "allowChannels": true,
+        "autoInjectAPI":{
+            "enabled": true,
+            "autoInit": {
+                "bus": true,
+                "windows":true,
+                "layouts": true,
+                "contexts": true
+            }
+        }
+    },
+    "ignoreSaveOnClose": true,
+    "allowMultiple": false,
+    "customProperties": {
+        "appManagerOrder": 1
+    }
+}
